@@ -1,0 +1,5 @@
+
+Para remover a senha da BIOS via Linux, via shell, faça os seguintes comandos como root:
+
+# printf "\x2E" | dd bs=1 seek=112 of=/dev/port
+# printf "\xFF" | dd bs=1 seek=113 of=/dev/port 

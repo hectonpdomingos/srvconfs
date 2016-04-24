@@ -1,0 +1,19 @@
+ netstat -an | grep 'tcp\|udp' | awk '{print $5}' | cut -d: -f1 | sort | uniq -c | sort -n
+
+
+
+Para bloquear o tráfego de determinado host utilize o comando abaixo:
+
+arp -s <ip_a_ser_bloqueado> 0
+
+Para desbloquear:
+
+arp -d <ip_anteriormente_bloqueado>
+
+Ex.: Bloquear IP 192.168.0.10:
+
+# arp -s 192.168.0.10 0
+
+Desbloquear o IP acima:
+
+# arp -d 192.168.0.10 
