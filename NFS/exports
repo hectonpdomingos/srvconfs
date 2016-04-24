@@ -1,0 +1,13 @@
+# /etc/exports: the access control list for filesystems which may be exported
+#               to NFS clients.  See exports(5).
+
+#para todos os hosts somente leitura
+#/home/arquivos 10.1.1.* (ro,async)
+
+#para todos os hosts com leitura e escrita
+#/home/arquivos 10.1.1.* (rw,async)
+
+#acesso leitura e escrita apenas para o micro 
+#/home/arquivos 10.1.1.3 (rw,async)
+
+

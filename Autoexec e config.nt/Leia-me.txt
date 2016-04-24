@@ -1,0 +1,2 @@
+use este estas confs para liberar memoria convesional
+para prg em dos

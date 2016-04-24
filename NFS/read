@@ -1,0 +1,27 @@
+ 
+pacotes necessarios 
+
+portmap
+nfs-common
+nfs-kernel-serveer
+
+ isso no debian e quando usa o LTSP
+Use os comamdos abaixo para corrigir a posição do serviço portmap e verificar se os outros dois estão ativos e configurados para serem inicializados no boot.
+update-rc.d -f portmap remove
+update-rc.d -f portmap strat 43 s .
+update-rc.d -f nfs-common strat 20 5 .
+update-rc.d -f nfs-kernel-server start 20 5 .
+
+
+comandos
+
+showmount -a , mostra uma lista de diretorios compartilhados com o nfs, e uma lista dos usuarios que 
+tiveram acesso a eles desde o ultimo reboot
+
+exportfs -a -v , ativa os novos comparilhamentos sem a necessidade de reiniciar o servidor nfs
+
+
+
+as permições ao usuario, exemplo, para que joao tenha acesso a escrita no compartilhamento
+do hecton, tem dois modos, 1 é criado um usuario hecton, com qualquer senha, a outra e liberar o acesso
+no compartilhamento do servidor chmod -R 777 /home/arquivos

@@ -1,0 +1,183 @@
+
+Hecton P.Domingos
+
+Ajustes finos (usuários, grupos, máquinas)
+Criando o diretório netlogon: 
+
+# mkdir -p /etc/samba/netlogon 
+
+Ajustando permissão: 
+
+# chmod 755 /etc/samba/netlogon 
+
+Criando contas de usuário: 
+
+Agora precisaremos criar as contas de usuários e de máquinas para que o objetivo seja atingido. Primeiramente cadastre o root no Samba: 
+
+# smbpasswd -a root 
+
+Criando localmente os usuários que utilizaram o Samba: 
+
+useradd -m -d < diretório de home real do usuário > -s /bin/false <nome do usuário> 
+
+Ex: 
+
+# useradd -m -d /home/homer -s /bin/false homer 
+
+O usuário não necessita ter permissão para logar localmente e nem de um shell, sendo assim aumentando a segurança. 
+
+Adicionando o usuário no Samba: 
+
+# smbpasswd -a homer 
+
+Para dar/obter permissão de administrador no domínio, é preciso criar um grupo e associá-lo ao grupo "Domain Admins", para isso basta executar o comando abaixo: 
+
+Primeiro crie um grupo, para isso execute: 
+
+# addgroup admin 
+
+Onde admin será o grupo a ser criado pelo comando "addgroup", podendo ser qualquer nome. O próximo passo e associar o grupo criado ao grupo do Unix, para isso execute: 
+
+# net groupmap modify ntgroup="Domain Admins" unixgroup=admin 
+
+Depois basta adicionar os usuários que terão permissão de administrador (permissão total) ao grupo admin. Para adicionar um usuário, no momento de sua criação basta colocar a flag "-g" seguido do grupo, assim: 
+
+# useradd -g admin -m -d /home/homer -s /bin/false homer 
+
+
+Criando conta de máquina
+
+É necessário criar contas para as máquinas, os nomes devem ser os nomes reais das máquinas, encontrado em: 
+
+Iniciar > Configurações > Painel de Controle > Sistema > Nome do Computador 
+
+Como exemplo, supondo que a máquina a ser adicionada chame-se "depti01": 
+
+# useradd -d /dev/null -s /bin/false depti01$ 
+
+Note que foi inserido o símbolo "$" na conta de máquina, isso é para aumentar a segurança. A fim de aumentar ainda mais a segurança trave à senha da conta: 
+
+# passwd -l depti01$ 
+
+Adicionando a máquina no Samba: aqui não é necessário colocar o símbolo $, pois ela será identificada pela flag "-m" de machine. 
+
+# smbpasswd -a -m depti01 
+
+Pronto, se até aqui tudo correu bem, seu servidor está pronto para ser usado. Não se esqueça de reiniciar o Samba para que todas alterações sejam aplicadas e também coloque-o para iniciar junto com o sistema. Verifique como fazer isso na sua distribuição. 
+
+
+
+
+
+
+
+
+Problemas:
+Se aparecer um erro no comando
+
+# net groupmap modify ntgroup="Domain Admins" unixgroup=admin 
+
+Use esse para resolver
+
+Na minha maquina nao tinha o ntgroup criado, fiquei me batendo ate encontrar a dica do kayer_4:
+
+# net groupmap list
+
+Exemplo da minha listagem:
+
+Domain Admins (S-1-5-21-1826733997-2455195794-3424030029-512) -> root
+
+1° - Caso para você não apareça nada então você vai ter que criar:
+
+# net groupmap add ntgroup="Domain Admins" rid=512 unixgroup=root
+
+2° - Caso já exista mas ele está apontando para outro grupo, então modifique:
+
+# net groupmap modify ntgroup="Domain Admins" rid=512 unixgroup=root
+
+Confira para ver se você fez certo:
+
+# net groupmap list
+
+Domain Admins (S-1-5-21-1826733997-2455195794-3424030029-512) -> root
+
+Agora os usuários do grupo Root são administradores no Windows também!!! 
+
+
+
+
+
+
+#################################################################################
+Na configuração que fiz para um cliente, o comando para adcionarr administradores para o pdc
+não funcionou vinculado ao root.
+Apenas esse
+
+net groupmap add ntgroup="Domain Admins" rid=512 unixgroup=administradores 
+
+
+useradd -g administradores -m -d /home/administradores -s /bin/false administradores 
+
+Adcionei também um grupo "user" para usuarios restritos
+
+
+
+addgroup
+useradd -g user -m -d /home/administradores -s /bin/false usuario1 
+
+
+
+
+
+
+###################################################################################
+
+>PARA CRIAR GRUPOS DE TRABALHO NO SRV
+[root@Svr restauracao]# groupadd srv
+
+*****************************************************************************************
+>para criar usuario no srv
+dando ao usuario acesso de administrador
+
+[root@Svr restauracao]# useradd -g administradores -G srv -d /dev/null -s /bin/false nopax
+
+>dando ao usuario acesso limitado
+[root@Svr restauracao]# useradd -g user -G srv -d /dev/null -s /bin/false nopax
+
+
+passwd -l nopax
+smbpasswd -a nopax
+
+******************************************************************************************
+
+fazendo um compartilhamento para o usuario criado. no exemplo o nopax. terá um compartilhamento no seu grupo chamado
+
+[root@Svr restauracao]# cd /etc/samba
+[root@Svr samba]# ls
+backup.sh  lmhosts  schannel_store.tdb  secrets.tdb  smb.conf  smbpasswd  smbusers
+[root@Svr samba]# vim smb.conf
+[root@Svr samba]# cd /focus/samba
+[root@Svr samba]# ls
+admin      contabil    financeiro  marketing  rh
+auditoria  deposito    g3          netlogon   sac
+camera     digitacao   geral       notebook   samba]#
+cd         diretoria   locucao     nutricao   secretaria
+compras    diretrizes  log_backup  publica    srv[root@Svr
+
+[root@Svr samba]# mkdir srv
+
+
+*******************************************************************************************************************
+para apagar usuario
+
+userdel nopax
+
+cd/focus/samba/netlogon/
+cp wesley.bat nopax.bat
+
+
+vim smbusers
+/etc/init.d/smb reload
+clear
+testparm
+vim /etc/samba/smbpasswd

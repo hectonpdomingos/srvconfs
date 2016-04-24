@@ -1,0 +1,3 @@
+#para montar manualmente com a opção soft
+#mount -t nfs -o soft 10.1.1.1:arquivos /mnt/aquivos nfs noauto,users,exec,soft 0 0 
+10.1.1.1:arquivos /mnt/aquivos nfs noauto,users,exec,soft 0 0 

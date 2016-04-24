@@ -1,0 +1,60 @@
+iptables: O executável que permite definir regras do firewall
+
+Parâmetros do iptables:
+
+-A INPUT  : Pacote de entrada
+-A OUTPUT : Pacote de saída
+-A FORWARD: Pacote proveniente de um micro da rede local, destinado à Internet ou quando um pacote da Internet é redirecionado a um micro da rede local.
+
+-p tcp : Usando o protocolo TCP
+-p udp : Usando o protocolo UDP
+-p icmp: Pacote de controle (ping, etc.)
+
+Ex: iptables -A OUTPUT -p icmp --icmp-type echo-request -j DROP
+
+-i eth0: Proveniente ou destinado à placa eth0 
+
+--destination-port ou --dport : Destinado à porta x
+ 
+-s : Proveniente do IP ou faixa de IP especificado, ex: -s 192.168.0.1
+
+-d : Destinado ao IP ou faixa especificado, ex: -d 192.168.0.0/255.255.255.0
+
+--syn : Cria uma regra válida apenas para novas conexões, nao impedindo que o outro micro responda a conexoes iniciadas pelo servidor, como em: iptables -A INPUT -p tcp --syn -j DROP
+
+-j : Especifica uma ação, que pode ser:
+
+-j ACCEPT : Aceita o pacote
+-j REJECT : Rejeita (educadamente) o pacote
+-j DROP   : Ignora o pacote, não envia nenhum tipo de resposta 
+
+
+
+	iptables -A INPUT -p tcp --dport 3128 -j ACCEPT
+	iptables -A FORWARD -p tcp --dport 53 -j ACCEPT
+	iptables -A FORWARD -p tcp --dport 80 -j ACCEPT
+	iptables -A FORWARD -p tcp -j REJECT
+
+
+	iptables -t nat -A PREROUTING -i eth0 -p tcp -s 220.16.2.1 --dport 3389 -j DNAT --to-dest 192.168.0.2
+	iptables -t nat -A FORWARD -p tcp -i eth0 -s 220.16.2.1 --dport 3389 -d 192.168.0.2 -j ACCEPT
+	iptables -A INPUT -p tcp --syn -s 127.0.0.1/255.0.0.0 -j ACCEPT
+	iptables -A INPUT -p tcp --syn -j DROP
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

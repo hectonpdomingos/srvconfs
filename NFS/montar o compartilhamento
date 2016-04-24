@@ -1,0 +1,10 @@
+ 
+mkdir /mnt/arquivos
+mount -t nfs 10.1.1.1:arquivos /mnt/arquivos
+
+
+
+
+caso no fstab  estiver com a opção soft sera montado da seginte forma
+mount -t nfs -o soft 10.1.1.1:arquivos /mnt/aquivos nfs noauto,users,exec,soft 0 0 
+10.1.1.1:arquivos /mnt/aquivos nfs noauto,users,exec,soft 0 0 

@@ -1,0 +1,65 @@
+REM Arquivo de inicialização do MS-DOS no Windows
+REM
+REM CONFIG.SYS x CONFIG.NT
+REM O arquivo CONFIG.SYS não é usado para inicializar o ambiente
+REM do MS-DOS. Com este fim é usado o arquivo CONFIG.NT, a não ser 
+REM que um arquivo de inicialização diferente seja especificado no
+REM arquivo de informação de programa (PIF) de um aplicativo.
+REM
+REM ECHOCONFIG
+REM Por padrão, nenhuma informação é exibida ao se inicializar o
+REM ambiente do MS-DOS. Para exibir as informações dos arquivos
+REM CONFIG.NT e AUTOEXEC.NT, adicione o comando ECHOCONFIG ao arquivo
+REM CONFIG.NT ou a outro arquivo de inicialização.
+REM
+REM NTCMDPROMPT
+REM Quando se retorna de um programa residente na memória ao prompt
+REM de comando ou enquanto se executa um aplicativo do MS-DOS, o Windows
+REM executa o COMMAND.COM para permitir que o programa residente permaneça
+REM ativo. Se você desejar que o Prompt de comando do Windows (CMD.EXE)
+REM seja executado ao invés do COMMAND.COM, adicione o comando ntcmdprompt
+REM ao arquivo CONFIG.NT ou a outro arquivo de inicialização.
+REM
+REM DOSONLY
+REM Por padrão, você pode iniciar qualquer aplicativo executando o programa
+REM COMMAND.COM. Se você iniciar um aplicativo que não seja do MS-DOS, é
+REM possível que programas residentes na memória sejam interrompidos. Para
+REM garantir que somente aplicativos do MS-DOS possam ser iniciados, adicione
+REM o comando dosonly ao arquivo CONFIG.NT ou a outro arquivo de
+REM inicialização.
+REM
+REM EMM
+REM Você pode usar a linha de comando EMM para configurar o gerenciador
+REM de memória expandida (EMM). A sintaxe é a seguinte:
+REM
+REM EMM = [A=ConjRegMapAlts] [B=SegmentoBase] [RAM]
+REM
+REM	ConjRegMapAlts
+REM	    especifica o total de conjuntos de registros de mapeamento
+REM	    alternativos que você deseja que o sistema aceite.
+REM         1 <= AltRegSets <= 255. O valor padrão é 8.
+REM	SegmentoBase
+REM	    especifica o endereço do segmento inicial na memória
+REM	    convencional do DOS em que você deseja que o sistema aloque
+REM	    os quadros de páginas do EMM. O valor deve ser fornecido em
+REM	    números hexadecimais. 0x1000 <= SegmentoBase <= 0x4000.
+REM	    O valor é arredondado para baixo no limite de 16 Kb.
+REM	    O valor padrão é 0x4000.
+REM	RAM
+REM	    especifica que o sistema deve alocar somente 64 Kb do espaço
+REM	    de endereçamento da área do Bloco de Memória Superior (UMB)
+REM	    para quadros de páginas do EMM e deixar o restante (se
+REM	    houver) para ser usado pelo DOS para aceitar comandos
+REM	    loadhigh e devicehigh. Por padrão, o sistema aloca o
+REM	    máximo possível para os quadros de páginas.
+REM
+REM	O tamanho do EMM é determinado pelo arquivo PIF associado ao
+REM	aplicativo ou pelo arquivo _default.pif. Se o tamanho do arquivo
+REM	PIF for igual a zero, o EMM será desativado e a linha de comando
+REM	EMM ignorada.
+REM
+dos=high, umb
+device=%SystemRoot%\system32\himem.sys
+files=150
+buffers=20
+

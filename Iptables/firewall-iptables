@@ -1,0 +1,176 @@
+#!/bin/bash
+#Hecton P. Domingos  - 2008
+#
+ IPTABLES=/sbin/iptables
+ WAN=eth0 
+ LAN=eth1
+# LANaux=eth2
+ SVRSAMBA=10.1.1.1
+ MODPROBE=/sbin/modprobe
+
+ $MODPROBE iptable_nat
+ $MODPROBE ip_conntrack
+ $MODPROBE ip_conntrack_ftp
+ $MODPROBE ip_nat_ftp
+ $MODPROBE ipt_LOG
+ $MODPROBE ipt_REJECT
+ $MODPROBE ipt_MASQUERADE
+ $MODPROBE ip_tables
+ $MODPROBE iptable_filter
+ $MODPROBE ipt_state
+
+ echo "ATIVANDO FIREWALL..."
+
+ $IPTABLES -F
+ $IPTABLES -X
+ $IPTABLES -F -t nat
+ $IPTABLES -X -t nat
+ $IPTABLES -F -t mangle
+ $IPTABLES -X -t mangle
+ $IPTABLES -P INPUT DROP
+ $IPTABLES -P OUTPUT DROP
+ $IPTABLES -P FORWARD DROP
+
+# desabilita resposta para ping
+ echo 1 > /proc/sys/net/ipv4/icmp_echo_ignore_all
+
+# desabilita port scan
+ echo 1 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
+
+# desabilita redirecionamento de ICMP
+for f in /proc/sys/net/ipv4/conf/*/accept_redirects; do
+echo 0 >$f
+done
+#protecao contra IP spoofing
+ for i in /proc/sys/net/ipv4/conf/*/rp_filter; do
+ echo 1 >$i
+ done
+
+#barra todo o forward que nao estiver listado abaixo
+# $IPTABLES -t filter -P FORWARD DROP
+
+# libera resposta para consultas DNS (no servidor)
+$IPTABLES -t filter -A INPUT -i $WAN -p tcp -s 0/0 --sport 53 -j ACCEPT
+$IPTABLES -t filter -A INPUT -i $WAN -p udp -s 0/0 --sport 53 -j ACCEPT
+#libera acesso EXTERNO para SSH
+$IPTABLES -t filter -A INPUT -i ppp0 -p tcp -s 0/0 --dport 22 -j ACCEPT
+
+#libera acesso EXTERNO para FTP
+$IPTABLES -t filter -A INPUT -i $WAN -p tcp -s 0/0 --dport 21 -j ACCEPT
+$IPTABLES -t filter -A INPUT -i $WAN -p tcp -s 0/0 --dport 20 -j ACCEPT
+#Libera acesso para pop e smtp gmail
+# $IPTABLES -t filter -A INPUT -i $WAN -p udp -s 0/0 --sport 995 -j ACCEPT
+# $IPTABLES -t filter -A INPUT -i $WAN -p udp -s 0/0 --sport 465 -j ACCEPT
+
+#Libera acesso EXTERNO para porta 5902 (vnc em servidor internet)
+$IPTABLES -t filter -A INPUT -p tcp -i $WAN -s 0/0 --dport 5902 -j ACCEPT
+$IPTABLES -t filter -A INPUT -p tcp -i ppp0 -s 0/0 --dport 5903 -j ACCEPT
+#redirecionando acesso porta 5900 (VNC) para micro da rede local
+#$IPTABLES -t nat -A PREROUTING -p tcp -i ppp0 --dport 5900 -j DNAT --to-destination 10.1.1.3:5900
+
+#redirecionando acesso porta  21 (FTP) o 2º  servidor (svrdados)
+#$IPTABLES -t nat -A PREROUTING -p tcp -i ppp0 --dport 21 -j DNAT --to-destination 10.1.1.1:21
+
+#$IPTABLES -t nat -A PREROUTING -p tcp -i ppp0 --dport 20 -j DNAT --to-destination 10.1.1.1:20
+##### ACCEPT (libera) pacotes de retorno da internet
+ $IPTABLES -A INPUT -i ! $WAN -j ACCEPT
+ $IPTABLES -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+ $IPTABLES -A OUTPUT -m state --state ESTABLISHED,RELATED,NEW -j ACCEPT
+ $IPTABLES -A FORWARD -m state --state ESTABLISHED,RELATED,NEW -j ACCEPT
+
+##### Liberar Conectividade Social para toda a rede
+# liberando acesso a toda a rede 200.201 e pode liberar sites alem da CAIXA. (rever regra)
+$IPTABLES -t nat -A PREROUTING -p tcp -d 200.201.0.0/16 -j ACCEPT
+$IPTABLES -A FORWARD -p tcp -d 200.201.0.0/16 -j ACCEPT
+
+##Regra para conectividade Social on-line
+ $IPTABLES -t nat -A PREROUTING -i $LAN -p tcp -d  200.255.42.71 --dport 80 -j ACCEPT
+
+#TEDSEF
+ $IPTABLES -A FORWARD -i $LAN -d 200.199.34.41 -p tcp -j ACCEPT
+
+#Sintegra
+ $IPTABLES -A FORWARD -i $LAN -p tcp --dport 8017 -j ACCEPT
+
+# Bloqueando portas do samba para acesso externo
+# $IPTABLES -A INPUT -p tcp -i $WAN --syn --dport 139 -j DROP
+# $IPTABLES -A INPUT -p tcp -i $WAN --syn --dport 138 -j DROP
+# $IPTABLES -A INPUT -p tcp -i $WAN --syn --dport 137 -j DROP
+
+#liberando samba para rede interna
+# $IPTABLES -I INPUT -p tcp -s 10.6.0.0/24 -d $SVRSAMBA -m multiport --dport 138,139 -j ACCEPT
+# $IPTABLES -I INPUT -p tcp -s 192.168.1.0/24 -d $SVRSAMBA -m multiport --dport 138,139 -j ACCEPT
+
+#Boqueando orkut (https)
+$IPTABLES -t filter -A FORWARD -d 72.14.209.0/24 -p tcp --dport 443 -j REJECT
+$IPTABLES -t filter -A INPUT -d 72.14.209.0/24 -p tcp --dport 443 -j REJECT
+$IPTABLES -t filter -A OUTPUT -d 72.14.209.0/24 -p tcp --dport 443 -j REJECT
+
+#Bloqueando IMesh
+$IPTABLES -A FORWARD -d 216.35.208.0/24 -j REJECT
+
+#Bloqueando Bearshare
+$IPTABLES -A FORWARD -p tcp --dport 6346 -j REJECT
+
+#Bloqueando ToadNode
+$IPTABLES -A FORWARD -p tcp --dport 6346 -j REJECT
+
+#Bloqueando WinMX
+$IPTABLES -A FORWARD -d 209.61.186.0/24 -j REJECT
+$IPTABLES -A FORWARD -d 64.49.201.0/24 -j REJECT
+
+#Bloqueando Napigator
+$IPTABLES -A FORWARD -d 209.25.178.0/24 -j REJECT
+
+#Bloqueando Morpheus
+$IPTABLES -A FORWARD -d 206.142.53.0/24 -j REJECT
+$IPTABLES -A FORWARD -p tcp --dport 1214 -j REJECT
+
+#Bloqueando KaZaA
+ $IPTABLES -A FORWARD -d 213.248.112.0/24 -j REJECT
+ $IPTABLES -A FORWARD -p tcp --dport 1214 -j REJECT
+
+#Bloqueando Limewire
+$IPTABLES -A FORWARD -p tcp --dport 6346 -j REJECT
+
+#Bloqueando Audiogalaxy
+$IPTABLES -A FORWARD -d 64.245.58.0/23 -j REJECT
+
+#Bloqueando AIM
+$IPTABLES -A FORWARD -p tcp --dport 5190 -j REJECT
+$IPTABLES -A FORWARD -d 64.12.161.153/24 -j REJECT
+
+#Bloqueando ICQ
+$IPTABLES -A FORWARD -p tcp --dport 5190 -j REJECT
+$IPTABLES -A FORWARD -d 205.188.153.121/24 -j REJECT
+
+#Bloqueando Yahoo Messenger
+$IPTABLES -A FORWARD -d 216.136.233.138/24 -j REJECT
+
+#Bloqueando Napster
+$IPTABLES -A FORWARD -d 64.124.41.0/24 -j REJECT
+
+#nega acesso de ip da rede externa
+#$IPTABLES -A INPUT -s 200.166.51.0/24 -p tcp --syn -j DROP
+
+##################################    Regras Para o Proxy     ####################################
+
+#Ativa redirecionamento de acesso http (80) e https (443) para servidor proxy
+#$IPTABLES -t nat -A PREROUTING -p tcp -m multiport  --dport 80,443 -j REDIRECT --to-ports 3128
+$IPTABLES -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3128
+
+#ativa o mascaramento (NAT)
+$IPTABLES -t nat -A POSTROUTING -o ppp0 -j MASQUERADE
+
+#ativa o IP forward, repasse de pacote pras demais maquinas da rede interna
+echo 1 > /proc/sys/net/ipv4/ip_forward
+# Libera ADSL Velox para toda Rede
+$IPTABLES -A FORWARD -i ppp0 -j ACCEPT
+
+#libera trafego pra rede interna
+$IPTABLES -A INPUT -s 10.1.1.0/24 -j ACCEPT
+$IPTABLES -A FORWARD -s 10.1.1.0/24 -j ACCEPT
+$IPTABLES -A OUTPUT -s 10.1.1.0/24 -j ACCEPT
+
+ echo "REGRAS ADICIONADAS"
+
